@@ -4,7 +4,7 @@ import numpy as np
 ip = []
 src = []
 dst= []
-protocol = []
+
 
 pc = rdpcap("/run/media/anvit/Media/IR-sra/network data/selected.pcap")
 for x in range(0, len(pc)):
