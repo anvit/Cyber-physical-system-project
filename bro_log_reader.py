@@ -9,7 +9,6 @@ proto = []
 ip = []
 duration = []
 
-f = open('../dump.txt', 'w')
 for j in range(0,166):
 	addr = '../Large-Logs/pcap'+str(j)+'/conn.log'
 	num_lines = sum(1 for line in open(addr))
@@ -45,6 +44,7 @@ for i in range(0,len(src_ip)):
 		newtest = list(set(test))
 		con[ip_set.index(src_ip[i])][ip_set.index(dst_ip[i])] =  newtest
 
+f = open('../dump.txt', 'w')
 for i in range(0,len(ip_set)):
 	for j in range(0,len(ip_set)):
 		if con[i][j]!= '' :
