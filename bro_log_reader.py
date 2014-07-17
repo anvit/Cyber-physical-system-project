@@ -1,10 +1,13 @@
 import csv
+import numpy as np
 
 src_ip = []
 src_p = []
 dst_ip = []
 dst_p = []
 proto = []
+ip = []
+duration = []
 
 f = open('../dump.txt', 'w')
 for j in range(0,166):
@@ -17,9 +20,32 @@ for j in range(0,166):
 			i = i + 1			
 			if row[0][0]!="#" and i<(num_lines):
 				src_ip.append(row[2])
+				ip.append(row[2])
+				ip.append(row[4])
 				src_p.append(row[3])
 				dst_ip.append(row[4])
 				dst_p.append(row[5])
 				proto.append(row[6])
+				duration.append(row[8])
 
-f.write(str(src_ip))
+ip_set = list(set(ip))
+con = np.empty((len(ip_set), len(ip_set)), dtype=object)
+for k in range(0,len(ip_set)):
+	for j in range(0,len(ip_set)):
+		con[k][j] = ''
+for i in range(0,len(src_ip)):
+	if con[ip_set.index(src_ip[i])][ip_set.index(dst_ip[i])] == '' :
+		test = []
+		test.append(proto[i])
+		con[ip_set.index(src_ip[i])][ip_set.index(dst_ip[i])] = test
+	else:	
+		test = []
+		test = con[ip_set.index(src_ip[i])][ip_set.index(dst_ip[i])]
+		test.append(proto[i])
+		newtest = list(set(test))
+		con[ip_set.index(src_ip[i])][ip_set.index(dst_ip[i])] =  newtest
+
+for i in range(0,len(ip_set)):
+	for j in range(0,len(ip_set)):
+		if con[i][j]!= '' :
+			f.write('Src IP: ' + ip_set[i] + ', Dst IP: ' + ip_set[j] + ', Protocol: ' + str(con[i][j]) + "\n")
