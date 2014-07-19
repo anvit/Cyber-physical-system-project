@@ -1,4 +1,5 @@
 import csv
+from collections import Counter
 import numpy as np
 
 src_ip = []
@@ -8,7 +9,9 @@ dst_p = []
 proto = []
 ip = []
 duration = []
-
+src_dst = []
+src_dst_split = []
+count_each = []
 for j in range(0,166):
 	addr = '../Large-Logs/pcap'+str(j)+'/conn.log'
 	num_lines = sum(1 for line in open(addr))
@@ -16,7 +19,7 @@ for j in range(0,166):
 	with open(addr, 'r') as csvfile:
 		spamreader = csv.reader(csvfile, delimiter='	')
 		for row in spamreader:
-			i = i + 1			
+			i = i + 1
 			if row[0][0]!="#" and i<(num_lines):
 				src_ip.append(row[2])
 				ip.append(row[2])
@@ -26,6 +29,14 @@ for j in range(0,166):
 				dst_p.append(row[5])
 				proto.append(row[6])
 				duration.append(row[8])
+				src_dst.append(row[2]+":"+row[4])
+				src_dst_split.append(row[2]+":"+row[4])
+	if j%14 == 0 :
+		print j
+		count_each.append(Counter(src_dst_split))
+		del src_dst_split[:]
+
+count_freq = Counter(src_dst)
 
 ip_set = list(set(ip))
 con = np.empty((len(ip_set), len(ip_set)), dtype=object)
@@ -37,12 +48,23 @@ for i in range(0,len(src_ip)):
 		test = []
 		test.append(proto[i])
 		con[ip_set.index(src_ip[i])][ip_set.index(dst_ip[i])] = test
-	else:	
+	else:
 		test = []
 		test = con[ip_set.index(src_ip[i])][ip_set.index(dst_ip[i])]
 		test.append(proto[i])
 		newtest = list(set(test))
 		con[ip_set.index(src_ip[i])][ip_set.index(dst_ip[i])] =  newtest
+
+ip_list_file = open('../ips.txt', 'w')
+ip_list_file.write(str(sorted(ip_set)))
+
+connect_freq_file = open('../count_freq.txt', 'w')
+connect_freq_file.write(str(count_freq))
+
+print len(count_each)
+for i in range(0,len(count_each)):
+	connect_freq_file = open('../count_freq_split'+str(i)+'.txt', 'w')
+	connect_freq_file.write(str(count_each[i]))
 
 f = open('../dump.txt', 'w')
 for i in range(0,len(ip_set)):
