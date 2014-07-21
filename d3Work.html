@@ -1,0 +1,391 @@
+	<!doctype html>
+<html>
+
+<head>
+	<title>Network Traffic</title>
+	<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+	
+	<div id="protoGraph">
+		<!-- Default values -->
+		<input type="range" id="slider" min="0" max="100" value="1" />
+		<input type="number" id="inputBox" name="quantity" min="1" max="5" style="width: 100px">
+	  	<input type="submit" id="button" style="">
+  		<div id = "graph"></div>
+	</div>
+
+	<div id="modbusGraph">
+		<!-- Default values -->
+		<input type="range" id="slider2" min="0" max="100" value="1" />
+		<input type="number" id="inputBox2" name="quantity" min="1" max="5" style="width: 100px">
+	  	<input type="submit" id="button2" style="">
+	  	<button type="button" id="animate" style="">Animate</button>
+
+  		<div id = "graph2"></div>
+	</div>
+
+	<script type="text/javascript">
+
+		var modbusData;									// contains addresses accessed sorted by time(seconds)
+		var modbusSortedIP;								// an array containing the ips sorted, used as a table
+		var addressCount; 								// array containing the count an address is accessed by time
+		var states = new Array();
+
+		function markovChain() {
+			for( i = 0; i < modbusData.length; i++){
+				var ID = "";
+				currentDests = new Array();
+
+				//get ip addresses that are accesses at time i
+				for( q = 0; q < modbusData[i].length; q++){
+					//dont include duplicates
+					if(currentDests.indexOf( modbusData[i][q]) < 0 )
+						currentDests.push(modbusData[i][q]);
+				}
+				
+				//sort those addresses
+				currentDests.sort();
+				//create ID for each combination
+				for (var k = 0; k < currentDests.length; k++) {
+					ID = ID + String.fromCharCode(48 + modbusSortedIP.indexOf( currentDests[k] ));
+				};
+
+				//store individual ids in the state array
+				if(states.indexOf(ID) < 0)
+					states.push(ID);
+			}
+
+			for (var i = 0; i < states.length; i++) {
+				console.log(states[i]);
+			};
+		}
+
+		// modbus.log data
+		// the file needs to be in the csv format with two fields: time, to
+		// where "time" is the timestam and to is the ip address that is being accessed
+		// "time","to"
+		// 1374891483.008342,199.99.9.999 
+		d3.csv("./test1_pcap_modbus.csv", function (data) {
+			var ipDest = [];
+			var width = 700;
+			var height = 800;
+			var ipDestXLoc = 250;
+			var animationCount = 0;
+
+			var input = document.getElementById("inputBox2");
+			var rangeSlider = document.getElementById("slider2");
+			var button = document.getElementById("button2");
+			var animateButton = document.getElementById("animate");
+
+			// make each time stamp to int and make the min be zero and extracts the addrs used
+			var min = parseInt(data[0].time);
+			for (i = 0; i < data.length; i++) {
+				data[i].time = parseInt(data[i].time) - min;
+					if(ipDest.indexOf(data[i].to) < 0)
+						ipDest.push(data[i].to);
+			};
+
+			ipDest.sort();
+	
+			//array that organizes the modbus ip dest based on time, essentially bucket sort
+			var sortedData = new Array(data[data.length - 1].time - data[0].time);
+			for (var i = 0, k = 0; i < sortedData.length; i++) {
+				sortedData[i] = new Array();
+				for (; k < data.length; k++) {
+					if (data[k].time == i)
+						sortedData[i].push(data[k].to);
+					else if (data[k].time > i){
+						k = k - 1;
+						break;
+					}
+				};
+			};
+	
+			//create and initialize address table
+			var addrsTable = new Array(data[data.length -1].time - data[0].time);	
+			for (var i = 0, x = 0; i < addrsTable.length; i++) {
+				addrsTable[i] = new Array(ipDest.length);
+				for (var k = 0; k < addrsTable[i].length; k++){
+					if(i==0)
+						addrsTable[i][k] = 0;
+					else
+						addrsTable[i][k] = addrsTable [i-1][k];
+				};
+
+				for (; x < data.length; x++) {
+					if (data[x].time == i)
+						addrsTable[i][ ipDest.indexOf(data[x].to) ] ++;
+					else if (data[x].time > i){
+						x = x - 1;
+						break;
+					}
+				};
+			};
+
+			// markovChain
+			modbusSortedIP = ipDest;
+			modbusData = sortedData;
+			addressCount = addrsTable;
+			markovChain();
+			
+			// update slider and input inputBox
+			input.min = data[0].time;
+			input.max = data[data.length - 1].time;
+			input.value = 0;
+			rangeSlider.min = input.min;
+			rangeSlider.max = input.max;	
+
+			var canvas = d3.select("#graph2")
+									.append("svg")
+									.attr("width", width)
+									.attr("height", height);
+
+			var lines = canvas.append("g");
+
+			//red circle that represents the control station
+			var circle = canvas.append("circle")
+							.attr("cx", 5)
+							.attr("cy", height/2)
+							.attr("r", 5)
+							.attr("fill", "red");
+
+			//ip destinations represented by blue circles
+			var margin = height/ipDest.length;
+			for (var i = 0; i < ipDest.length; i++) {
+				canvas.append("circle")
+							.attr("cx", ipDestXLoc)
+							.attr("cy", i*margin + 3)
+							.attr("r", 3)
+							.attr("fill", "blue");		
+			};
+
+			canvas.selectAll("text")
+						.data(ipDest)
+						.enter()
+							.append("text")
+							.attr("fill", "black")
+							.attr("x", ipDestXLoc + 10)
+							.attr("y", function (d,i) { return i*margin + 6; })
+							.style("font-size","10px")
+							.text(function (d,i) {return d;});			
+
+			function updateInputBox(){
+				input.value = rangeSlider.value;
+			}
+
+
+			//very crude animation functions
+			function animation(){
+				animationCount = input.value;
+				return setInterval(animationDraw, 125);
+			}
+			function animationDraw(){
+				if (animationCount < input.max) {
+					input.value = animationCount;
+					makeGraph();
+					animationCount++;
+				}
+			}
+
+			function makeGraph(){
+				// error check maybe?
+				var val = parseInt(input.value);
+				// ->->->->->->->->->error check goes here <-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-
+
+				lines.selectAll("*").remove();
+				// create lines showing the connections
+				for (var i = 0; i < sortedData[val].length; i++) {
+					lines.append("line")
+						.attr("x1", 6)
+						.attr("y1", height/2)
+						.attr("x2", ipDestXLoc - 5)
+						.attr("y2", ipDest.indexOf(sortedData[val][i]) * margin + 2)
+						.attr("stroke", "green").attr("stroke-width", 1);
+				};
+
+				//create graph showing distribution of connections
+				var widthScale = d3.scale.linear().domain([0, 14000]).range([0, 350]);
+				lines.selectAll("rect")
+					.data(addrsTable[val])
+					.enter()
+						.append("rect")
+						.attr("width", function (d) { return widthScale(d);})
+						.attr("height", 2)
+						.attr("y", function (d, i) {return i * margin + 2;})
+						.attr("x", ipDestXLoc + 75)
+						.attr("fill", "#ffaa00");			
+			}
+
+			rangeSlider.addEventListener("click", updateInputBox, false);
+			button.addEventListener("click", makeGraph, false);
+			animateButton.addEventListener("click", animation, false);	
+		});	//end of modbus
+
+
+		// most likely will delete this section, not very important
+		// conn.log data
+		d3.csv("./pcap_conn_addr.csv", function (data1){
+			d3.csv("./test2_pcap_conn.csv", function (data2){
+				var width = 500;
+				var height = 500;
+
+				var input = document.getElementById("inputBox");
+				var rangeSlider = document.getElementById("slider");
+				var button = document.getElementById("button");
+				var protocols = [];
+
+				var conns = data2;
+				var addrs = data1;
+
+				var dataCanvas = d3.select("#graph")
+									.append("svg")
+									.attr("width", width)
+									.attr("height", height);
+
+				// make each time stamp to int and make the min be zero and extract the protocols used
+				var min = parseInt(conns[0].time);
+
+				for(i = 0; i<conns.length; i++){
+					conns[i].time = parseInt(conns[i].time) - min;
+					if(protocols.indexOf(conns[i].protocol) < 0)
+						protocols.push(conns[i].protocol);
+				}
+
+				// update slider and input inputBox
+				input.min = conns[0].time;
+				input.max = conns[conns.length - 1].time;
+				input.value = 0;
+				rangeSlider.min = input.min;
+				rangeSlider.max = input.max;
+
+				function updateInputBox() {
+					input.value = rangeSlider.value;
+				}
+
+				function getInput(){
+					console.log(input.value);
+
+					// error check value here.... Dont forget!
+					makeGraph();
+				}
+
+				function makeGraph() {
+					var proCount = new Array(protocols.length);
+					var val = parseInt(input.value);
+					var totalConns = 0;
+					for (var i = 0; i < proCount.length; i++) {
+						proCount[i] = 0;
+					}
+
+					for (i = 0; i < conns.length; i++) {
+						if(conns[i].time == val){
+							// count each protocol
+							proCount[ protocols.indexOf(conns[i].protocol) ] ++;
+							totalConns ++;
+						}
+					}
+
+					// check to see if this is the best way to remove things
+					// It probably is not... 
+					dataCanvas.selectAll("*").remove();
+					var widthScale = d3.scale.linear().domain([0, 200]).range([0, width]);
+					
+					dataCanvas.selectAll("rect")
+						.data(proCount)
+						.enter()
+							.append("rect")
+							.attr("width", function (d) { return widthScale(d);})
+							.attr("height", 50)
+							.attr("y", function (d, i) {return i * 100;})
+							.attr("fill", "green");
+
+					dataCanvas.selectAll("text")
+						.data(protocols)
+						.enter()
+							.append("text")
+							.attr("fill", "black")
+							.attr("y", function (d, i) { return (i*100) + 75; })
+							.text(function (d , i) {return d + ":" + proCount[i];});
+				}
+
+				rangeSlider.addEventListener("click", updateInputBox, false);
+				button.addEventListener("click", getInput, false);
+			});
+		});	//end of conn
+
+		// examples from earlier not relevant will delete once confident enough that I dont need this
+
+		// d3.select("p").text("Poop");
+		// d3.select("body").append("p").style("color", "red").text("hello");
+		// var width = 500;
+		// var height = 500;
+		// var dataArr = [20, 40, 50, 60];
+
+		// var widthScale = d3.scale.linear().domain([0, 60]).range([0, width]);
+		// var colorScale = d3.scale.linear().domain([0, 60]).range(["blue", "red"]);
+
+		// var axis = d3.svg.axis().scale(widthScale).ticks(5);
+
+		// var canvas = d3.select("body")
+		// 				.append("svg").attr("width", width).attr("height", height)
+		// 				.append("g").attr("transform", "translate(20,0)");
+
+		// // var circle = canvas.append("circle").attr("cx", 250).attr("cy", 250).attr("r", 50).attr("fill", "red");
+		// // var rect = canvas.append("rect").attr("width", 100).attr("height", 50);
+		// // var line = canvas.append("line").attr("x1", 0).attr("y1", 100).attr("x2", 400).attr("y2", 400)
+		// // 			.attr("stroke", "green").attr("stroke-width", 10);
+
+		// var bars = canvas.selectAll("rect")
+		// 					.data(dataArr)
+		// 						.enter()
+		// 							.append("rect")
+		// 								.attr("width", function(d){return widthScale(d);})										
+		// 								.attr("height", 50)
+		// 								.attr("fill", function(d) {return colorScale(d);})
+		// 								.attr("y", function(d, i){return i * 100});
+
+		// canvas.append("g").attr("transform", "translate(0, 400)").call(axis);
+
+		// //example 2
+
+		// var dataArgs = [45];
+		// var canvas2 = d3.select("body").append("svg").attr("width", width).attr("height", height);
+		// var circle2 = canvas2.append("circle").attr("cx", 250).attr("cy", 250).attr("r", 50).attr("fill", "red");
+		// var circle3 = canvas2.append("circle").attr("cx", 150).attr("cy", 150).attr("r", 50).attr("fill", "red");
+		// var circle4 = canvas2.append("circle").attr("cx", 50).attr("cy", 50).attr("r", 50).attr("fill", "red");
+		
+		// var circles = canvas2.selectAll("circle")
+		// 						.data(dataArgs)
+		// 							.attr("fill", "blue")
+		// 							// .enter()
+		// 							// 	.append("circle")
+		// 							// 		.attr("fill", "green")
+		// 							// 		.attr("cx", 50)
+		// 							// 		.attr("cy", 50)
+		// 							// 		.attr("r", 50)
+		// 						.exit()
+		// 							.attr("fill", "green");
+
+		// //example 3 transitions
+		// var canvas3 = d3.select("body").append("svg").attr("width", width).attr("height", height);
+		// var circle5 = canvas3.append("circle").attr("cx", 50).attr("cy", 50).attr("r", 50).attr("fill", "red");
+		// circle5.transition()
+		// 			.duration(1000)
+		// 			.delay(1000)
+		// 			.attr("cx", 150)
+		// 		.transition()
+		// 			.duration(1000)
+		// 			.attr("cx", 50)
+		// 			.each("end", function(){d3.select(this).attr("r", 5);});
+
+		// //array
+		// var array = [40, 30, 20, 44, 20, 55, 100];
+
+	</script>
+
+</body>
+
+</html>
