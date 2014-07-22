@@ -1,3 +1,4 @@
+import json
 import csv
 from collections import Counter
 import numpy as np
@@ -14,7 +15,8 @@ src_dst_split = []
 count_each = []
 select_src_ip = []
 select_dst_ip = []
-
+js = [ {} ]
+ctr = 0
 for j in range(0,166):
 	addr = '../Large-Logs/pcap'+str(j)+'/conn.log'
 	num_lines = sum(1 for line in open(addr))
@@ -33,6 +35,8 @@ for j in range(0,166):
 				proto.append(row[6])
 				duration.append(row[8])
 				src_dst.append(row[2]+":"+row[4])
+				js[0][ctr]= { "time" : row[0], "src_ip" : row[2], "dst_ip" : row[4], "protocol" : row[6], "duration" : row[8], "orig_bytes" : row[9], "resp_bytes" : row[10] }
+				ctr = ctr + 1
 				src_dst_split.append(row[2]+":"+row[4])
 				if(row[2]=='172.16.2.34'):
 					select_src_ip.append(row[4])
@@ -46,6 +50,12 @@ count_freq = Counter(src_dst)
 
 count_src_freq = Counter(select_src_ip)
 count_dst_freq = Counter(select_dst_ip)
+
+file = open("../data.json", "w")
+temp = json.dumps(js, sort_keys=True, indent=1, separators=(',', ': '))
+wr = temp[1:-1]
+file.write(wr)
+file.close()
 
 ip_set = list(set(ip))
 con = np.empty((len(ip_set), len(ip_set)), dtype=object)
