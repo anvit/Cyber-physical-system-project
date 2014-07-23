@@ -24,3 +24,13 @@ body {
 	width: auto;
 	margin: 5px;
 }
+
+#numAccessGraph {
+	background-color: white;
+	float: left;
+	height: auto;
+	width: auto;
+	margin: 5px;
+	border: black 1px solid;
+
+}
