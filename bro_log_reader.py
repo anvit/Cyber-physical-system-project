@@ -16,6 +16,9 @@ count_each = []
 select_src_ip = []
 select_dst_ip = []
 js = [ {} ]
+diff_host = []
+src_host43 = []
+dst_host43 = []
 ctr = 0
 for j in range(0,166):
 	addr = '../Large-Logs/pcap'+str(j)+'/conn.log'
@@ -42,14 +45,27 @@ for j in range(0,166):
 					select_src_ip.append(row[4])
 				elif(row[4]=='172.16.2.34'):
 					select_dst_ip.append(row[2])
+				elif(row[2]=='172.16.2.43'):
+					src_host43.append(row[4])
+				elif(row[4]=='172.16.2.43'):
+					dst_host43.append(row[2])
+				else:
+					diff_host.append(row[2]+"*"+row[4])
+				# elif(row[2]!='172.16.2.34'&&row[4]=='172.16.2.34'):
+
 	if j%14 == 0 :
 		count_each.append(Counter(src_dst_split))
 		del src_dst_split[:]
 
 count_freq = Counter(src_dst)
+count_diff_freq = Counter(diff_host)
 
 count_src_freq = Counter(select_src_ip)
 count_dst_freq = Counter(select_dst_ip)
+
+count_src43_freq = Counter(src_host43)
+count_dst43_freq = Counter(dst_host43)
+
 
 file = open("../data.json", "w")
 temp = json.dumps(js, sort_keys=True, indent=1, separators=(',', ': '))
@@ -80,11 +96,21 @@ ip_list_file.write(str(sorted(ip_set)))
 connect_freq_file = open('../count_freq.txt', 'w')
 connect_freq_file.write(str(count_freq))
 
+connect_diff_file = open('../count_diff_freq.txt', 'w')
+connect_diff_file.write(str(count_diff_freq))
+
 src_freq_file = open('../count_src_freq.txt', 'w')
 src_freq_file.write(str(count_src_freq))
 
 dst_freq_file = open('../count_dst_freq.txt', 'w')
 dst_freq_file.write(str(count_dst_freq))
+
+
+src43_freq_file = open('../count_src43_freq.txt', 'w')
+src43_freq_file.write(str(count_src43_freq))
+
+dst43_freq_file = open('../count_dst43_freq.txt', 'w')
+dst43_freq_file.write(str(count_dst43_freq))
 
 
 for i in range(0,len(count_each)):
