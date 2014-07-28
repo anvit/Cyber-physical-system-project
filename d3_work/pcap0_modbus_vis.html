@@ -1,4 +1,4 @@
-    <!doctype html>
+<!doctype html>
 <html>
 
 <head>
@@ -8,7 +8,7 @@
 </head>
 
 <body>
-    <div id="modbusGraph">
+     <div id="modbusGraph">
         <!-- Default values -->
         <input type="range" id="slider2" min="0" max="100" value="1" />
         <input type="number" id="inputBox2" name="quantity" min="1" max="5" style="width: 100px">
@@ -20,15 +20,20 @@
 
     <div id="numAccessGraph"></div>
 
-    <div id="protoGraph">
-        <!-- Default values -->
+    <div id="timeTable">
+        <div id="timeTableInside"></div>
+    </div>
+
+   <!-- <div id="protoGraph">
+         Default values
         <input type="range" id="slider" min="0" max="100" value="1" />
         <input type="number" id="inputBox" name="quantity" min="1" max="5" style="width: 100px">
         <input type="submit" id="button" style="">
         <div id = "graph"></div>
-    </div>
-
+    </div> -->
     <script type="text/javascript">
+        //debug code
+        var foo;
 
         var modbusData;                                 // contains addresses accessed sorted and indexed by time(seconds)
         var modbusSortedIP = new Array();               // an array containing the ips sorted, used as an index table
@@ -98,7 +103,12 @@
             var plotWidth = 800;
             var plothHeight = 300;
 
+            var timeTableWidth = 6600;
+            var timeTableHeight = 1005;
+
             var modbusSortedIPXLoc = 250;
+
+            var interval;
             var animationCount = 0;
 
             var input = document.getElementById("inputBox2");
@@ -185,42 +195,19 @@
             input.value = 0;
             rangeSlider.min = input.min;
             rangeSlider.max = input.max;
-            
-            // modbus address plot
-            plotCanvas = d3.select("#numAccessGraph")
-                            .append("svg")
-                            .attr("width", plotWidth)
-                            .attr("height", plothHeight);
-
-            var plot = plotCanvas.append("g");
-            plot.attr("transform", "translate(30, -20)");
-            
-            plotCanvas.append("g")
-                .attr("transform", "translate(30,280)")
-                .call(plotXaxis);
-
-            plotCanvas.append("g")
-                .attr("transform", "translate(30, -20)")
-                .call(plotYaxis);
-
 
             // modbus data graph
             canvas = d3.select("#graph2")
                             .append("svg")
                             .attr("width", width)
                             .attr("height", height);
-
             var lines = canvas.append("g");
-
-            //red circle that represents the control station
-            var circle = canvas.append("circle")
+            var circle = canvas.append("circle")                //red circle that represents the control station
                             .attr("cx", 5)
                             .attr("cy", height/2)
                             .attr("r", 5)
                             .attr("fill", "red");
-
-            //ip destinations represented by blue circles
-            var margin = height/modbusSortedIP.length;
+            var margin = height/modbusSortedIP.length;          //ip destinations represented by blue circles
             for (var i = 0; i < modbusSortedIP.length; i++) {
                 canvas.append("circle")
                         .attr("cx", modbusSortedIPXLoc)
@@ -228,9 +215,7 @@
                         .attr("r", 3)
                         .attr("fill", "blue");      
             };
-
-            // ip address text
-            canvas.selectAll("text")
+            canvas.selectAll("text")                            // ip address text
                         .data(IPConnArray)
                         .enter()
                             .append("text")
@@ -238,18 +223,80 @@
                             .attr("x", modbusSortedIPXLoc + 10)
                             .attr("y", function (d,i) { return i*margin + 6; })
                             .style("font-size","10px")
-                            .text(function (d,i) {return d.address;});          
+                            .text(function (d,i) {return d.address;});
+
+            // modbus address plot
+            plotCanvas = d3.select("#numAccessGraph")
+                            .append("svg")
+                            .attr("width", plotWidth)
+                            .attr("height", plothHeight);
+            var plot = plotCanvas.append("g");
+            plot.attr("transform", "translate(30, -20)");
+            plotCanvas.append("g")
+                .attr("transform", "translate(30,280)")
+                .call(plotXaxis);
+            plotCanvas.append("g")
+                .attr("transform", "translate(30, -20)")
+                .call(plotYaxis);
+
+            // Time table graph stuff
+            document.getElementById("timeTable").setAttribute("style", "width: 800px; height:1030px");
+            foo = document.getElementById("timeTableInside");
+            document.getElementById("timeTableInside").setAttribute("style", "width: 700px");
+
+            timeTableCanvas = d3.select("#timeTableInside")
+                                .append("svg")
+                                .attr("width", timeTableWidth)
+                                .attr("height", timeTableHeight)
+
+            timeTablePlane = timeTableCanvas.append("g");
+            timeTablePlane.attr("transform", "translate(0, 24)");
+
+            outSideTimeTableCanvas = d3.select("#timeTable")
+                                    .append("svg")
+                                    .attr("width", 80)
+                                    .attr("height", timeTableHeight + 5)
+            
+            outSideTimeTableCanvas.selectAll("text")                                                // ip address text
+                                    .data(IPConnArray)
+                                    .enter()
+                                        .append("text")
+                                        .attr("fill", "black")
+                                        .attr("x", 10)
+                                        .attr("y", function (d,i) { return i*(margin + 2.5) + 40; })
+                                        .style("font-size","12px")
+                                        .text(function (d,i) {return d.address;});
+
+
+            var allTheTimeTableSquares = new Array(modbusData.length);
+            for (var k = 0; k < modbusData.length; k++) {                                           //create squares!
+                timeTableCanvas.append("text")
+                                .attr("fill", "black")
+                                .attr("x", k * 13)
+                                .attr("y", 15)
+                                .style("font-size","8px")
+                                .text(k);
+                allTheTimeTableSquares[k] = new Array();
+                
+                for (var i = 0; i < modbusSortedIP.length; i++) {
+                    allTheTimeTableSquares[k].push( timeTablePlane.append("rect").attr("width", 10).attr("height", 10)
+                                        .attr("fill", "white")
+                                        .attr("stroke", "grey").attr("stroke-width", 1)
+                                        .attr("y", i*(margin + 2.5))
+                                        .attr("x", k* 13));
+                };
+            };
 
             function updateInputBox(){
                 input.value = rangeSlider.value;
             }
 
-
             //very crude animation functions
             function animation(){
                 animationCount = input.value;
                 plot.selectAll("*").remove();
-                return setInterval(animationDraw, 100);
+                document.getElementById("timeTableInside").scrollLeft = (-13) * modbusData.length;
+                interval = setInterval(animationDraw, 100);
             }
 
             function animationDraw(){
@@ -258,6 +305,8 @@
                     makeGraph();
                     animationCount++;
                 }
+                else
+                    window.clearInterval(interval);
             }
 
             function makeGraph(){
@@ -293,13 +342,13 @@
                         .attr("fill", "#ffaa00");
 
                 // create plot graph for number of addressed accessed at time val
-                var fill = "#aa55ee";
+                var fill = "#F7B036";
 
                 if(uniqueAddr.length >= 60)
-                    fill = "green";
+                    fill = "#DA2525";
 
                 if(uniqueAddr.length <= 45){
-                    fill = "red";
+                    fill = "#41D3F7";
                     timeWhiteListArray.push(val);
                 }
                     
@@ -308,6 +357,14 @@
                         .attr("cy", plotCanvasYScale(uniqueAddr.length))
                         .attr("r", 2)
                         .attr("fill", fill);
+
+                // show the addresses being connected to in the time table graph
+                if(val > 40)
+                    document.getElementById("timeTableInside").scrollLeft = (val- 40)*13;
+
+                for (var i = 0; i < uniqueAddr.length; i++) {                
+                   allTheTimeTableSquares[val][getIndexByKey(IPConnArray, "address", uniqueAddr[i])].attr("fill", fill);
+                };
             }
 
             rangeSlider.addEventListener("click", updateInputBox, false);
@@ -327,94 +384,94 @@
 
         // most likely will delete this section, not very important
         // conn.log data
-        d3.csv("./pcap_conn_addr.csv", function (data1){
-            d3.csv("./test2_pcap_conn.csv", function (data2){
-                var width = 600;
-                var height = 500;
+        // d3.csv("./pcap_conn_addr.csv", function (data1){
+        //     d3.csv("./test2_pcap_conn.csv", function (data2){
+        //         var width = 600;
+        //         var height = 500;
 
-                var input = document.getElementById("inputBox");
-                var rangeSlider = document.getElementById("slider");
-                var button = document.getElementById("button");
-                var protocols = [];
+        //         var input = document.getElementById("inputBox");
+        //         var rangeSlider = document.getElementById("slider");
+        //         var button = document.getElementById("button");
+        //         var protocols = [];
 
-                var conns = data2;
-                var addrs = data1;
+        //         var conns = data2;
+        //         var addrs = data1;
 
-                var dataCanvas = d3.select("#graph")
-                                    .append("svg")
-                                    .attr("width", width)
-                                    .attr("height", height);
+        //         var dataCanvas = d3.select("#graph")
+        //                             .append("svg")
+        //                             .attr("width", width)
+        //                             .attr("height", height);
 
-                // make each time stamp to int and make the min be zero and extract the protocols used
-                var min = parseInt(conns[0].time);
+        //         // make each time stamp to int and make the min be zero and extract the protocols used
+        //         var min = parseInt(conns[0].time);
 
-                for(var i = 0; i<conns.length; i++){
-                    conns[i].time = parseInt(conns[i].time) - min;
-                    if(protocols.indexOf(conns[i].protocol) < 0)
-                        protocols.push(conns[i].protocol);
-                };
+        //         for(var i = 0; i<conns.length; i++){
+        //             conns[i].time = parseInt(conns[i].time) - min;
+        //             if(protocols.indexOf(conns[i].protocol) < 0)
+        //                 protocols.push(conns[i].protocol);
+        //         };
 
-                // update slider and input inputBox
-                input.min = conns[0].time;
-                input.max = conns[conns.length - 1].time;
-                input.value = 0;
-                rangeSlider.min = input.min;
-                rangeSlider.max = input.max;
+        //         // update slider and input inputBox
+        //         input.min = conns[0].time;
+        //         input.max = conns[conns.length - 1].time;
+        //         input.value = 0;
+        //         rangeSlider.min = input.min;
+        //         rangeSlider.max = input.max;
 
-                function updateInputBox() {
-                    input.value = rangeSlider.value;
-                }
+        //         function updateInputBox() {
+        //             input.value = rangeSlider.value;
+        //         }
 
-                function getInput(){
-                    console.log(input.value);
+        //         function getInput(){
+        //             console.log(input.value);
 
-                    // error check value here.... Dont forget!
-                    makeGraph();
-                }
+        //             // error check value here.... Dont forget!
+        //             makeGraph();
+        //         }
 
-                function makeGraph() {
-                    var proCount = new Array(protocols.length);
-                    var val = parseInt(input.value);
-                    var totalConns = 0;
-                    for (var i = 0; i < proCount.length; i++) {
-                        proCount[i] = 0;
-                    };
+        //         function makeGraph() {
+        //             var proCount = new Array(protocols.length);
+        //             var val = parseInt(input.value);
+        //             var totalConns = 0;
+        //             for (var i = 0; i < proCount.length; i++) {
+        //                 proCount[i] = 0;
+        //             };
 
-                    for (var i = 0; i < conns.length; i++) {
-                        if(conns[i].time == val){
-                            // count each protocol
-                            proCount[ protocols.indexOf(conns[i].protocol) ] ++;
-                            totalConns ++;
-                        }
-                    };
+        //             for (var i = 0; i < conns.length; i++) {
+        //                 if(conns[i].time == val){
+        //                     // count each protocol
+        //                     proCount[ protocols.indexOf(conns[i].protocol) ] ++;
+        //                     totalConns ++;
+        //                 }
+        //             };
 
-                    // check to see if this is the best way to remove things
-                    // It probably is not... 
-                    dataCanvas.selectAll("*").remove();
-                    var widthScale = d3.scale.linear().domain([0, 200]).range([0, width]);
+        //             // check to see if this is the best way to remove things
+        //             // It probably is not... 
+        //             dataCanvas.selectAll("*").remove();
+        //             var widthScale = d3.scale.linear().domain([0, 200]).range([0, width]);
                     
-                    dataCanvas.selectAll("rect")
-                        .data(proCount)
-                        .enter()
-                            .append("rect")
-                            .attr("width", function (d) { return widthScale(d);})
-                            .attr("height", 50)
-                            .attr("y", function (d, i) {return i * 100;})
-                            .attr("fill", "green");
+        //             dataCanvas.selectAll("rect")
+        //                 .data(proCount)
+        //                 .enter()
+        //                     .append("rect")
+        //                     .attr("width", function (d) { return widthScale(d);})
+        //                     .attr("height", 50)
+        //                     .attr("y", function (d, i) {return i * 100;})
+        //                     .attr("fill", "green");
 
-                    dataCanvas.selectAll("text")
-                        .data(protocols)
-                        .enter()
-                            .append("text")
-                            .attr("fill", "black")
-                            .attr("y", function (d, i) { return (i*100) + 75; })
-                            .text(function (d , i) {return d + ":" + proCount[i];});
-                };
+        //             dataCanvas.selectAll("text")
+        //                 .data(protocols)
+        //                 .enter()
+        //                     .append("text")
+        //                     .attr("fill", "black")
+        //                     .attr("y", function (d, i) { return (i*100) + 75; })
+        //                     .text(function (d , i) {return d + ":" + proCount[i];});
+        //         };
 
-                rangeSlider.addEventListener("click", updateInputBox, false);
-                button.addEventListener("click", getInput, false);
-            });
-        }); //end of conn
+        //         rangeSlider.addEventListener("click", updateInputBox, false);
+        //         button.addEventListener("click", getInput, false);
+        //     });
+        // }); //end of conn
 
         // examples from earlier not relevant will delete once confident enough that I dont need this
 

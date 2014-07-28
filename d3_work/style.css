@@ -25,12 +25,46 @@ body {
 	margin: 5px;
 }
 
-#numAccessGraph {
+#numAccessGraph, #timeTableInside {
 	background-color: white;
 	float: left;
 	height: auto;
 	width: auto;
 	margin: 5px;
 	border: black 1px solid;
+}
 
+#timeTableInside {
+	background-color: white;
+	float: right;
+	margin: 5px;
+	border: black 1px solid;
+	overflow: auto;
+}
+
+ #timeTable {
+ 	background-color: white;
+	float: left;
+	margin: 5px;
+	border: black 1px solid;
+ }
+
+ /*Stuff for freq.html*/
+
+#freqGraphs{
+	background-color: white;
+	height: auto;
+	width: 1200px;
+	margin: auto;
+	border: black 1px solid;
+}
+
+.innerGraphs{
+	background-color: white;
+	height: auto;
+	width: 1000px;
+	float: right;
+	margin: 5px;
+	border: black 1px solid;
+	overflow: auto;
 }

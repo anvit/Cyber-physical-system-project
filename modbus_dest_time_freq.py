@@ -11,6 +11,8 @@ class DestIP:
 	def __init__(self, addr, first_occurrence):
 		self.addr = addr
 		self.last_occur = first_occurrence
+		self.first_occur = first_occurrence
+
 		self.interval_count = []
 		self.interval_count.append([])
 		self.interval_count.append([])
@@ -41,7 +43,7 @@ def find_by_addr(someArray, addr):
 js = [ {} ]
 ip_addrs = []
 
-for j in range(0,166):
+for j in range(0,1):
 	addr = '/media/227A4A207A49F159/TRA-Data+Logs/Large-Logs/pcap'+str(j)+'/modbus.log'
 	num_lines = sum(1 for line in open(addr))
 	i = 0
@@ -51,8 +53,6 @@ for j in range(0,166):
 		for row in spamreader:
 			i = i + 1
 			if row[0][0]!="#" and i<(num_lines):
-				# js[0][ctr]= { "time" : row[0], "src_ip" : row[2], "dst_ip" : row[4], "src_port" : row[3], "dest_port" : row[5], "func" : row[6] }
-				# ctr = ctr + 1
 				dest_ip = row[4]
 				time = row[0]
 				index = find_by_addr(ip_addrs, dest_ip)
@@ -62,18 +62,13 @@ for j in range(0,166):
 				else:
 					ip_addrs[index].new_occur(int(float(time)))
 
-# fun.print_intervals()
-
+count = 0
 for x in ip_addrs:
-	x.print_intervals()
+	js[0][count]= { "addr" : x.addr, "first_occur" : x.first_occur,"last_occur" : x.last_occur, "time_freq" : x.interval_count}
+	count += 1
 
-# js[0][0]= { "addr" : fun.addr, "last_occur" : fun.last_occur }
-# for x in xrange(0, len(fun.interval_count[0])):
-#  	js[0][0]["interval_of_"+str(fun.interval_count[0][x])] = fun.interval_count[1][x]
-
-# file = open("./modbus_data.json", "w")
-# temp = 
-# print json.dumps(js, sort_keys=True, indent=1, separators=(',', ': '))
-# wr = temp[1:-1]
-# file.write(wr)
-# file.close()
+file = open("./modbus_data.json", "w")
+temp = json.dumps(js, sort_keys=True, indent=1, separators=(',', ': '))
+wr = temp[1:-1]
+file.write(wr)
+file.close()

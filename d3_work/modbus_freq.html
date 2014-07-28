@@ -1,0 +1,482 @@
+<!doctype html>
+<html>
+<head>
+	<title>Modbus Destination Freq</title>
+    <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+	<div id="freqGraphs">
+           <div class="innerGraphs" id = "t0"></div>
+           <div class="innerGraphs" id = "t1"></div>
+           <div class="innerGraphs" id = "t2"></div>
+           <div class="innerGraphs" id = "t3"></div>
+           <div class="innerGraphs" id = "t4"></div>
+    </div>
+
+	<script type="text/javascript">
+	var ips;
+    var ipsSize = 75;
+	var topIntervals = new Array();
+
+    var interval = {
+        time: -1,
+        // conns:  
+    };
+
+	d3.json("./modbus_large_data.json", function (data) {
+		ips = data;
+        var graphSize = 240;
+
+		// count number of different topIntervals
+		for (var i = 0; i < ipsSize; i++) {
+            var curInterval = -1;
+            var maxCount = 0;
+
+            ips[i].touples = [];
+
+			for (var q = 0; q < ips[i].time_freq[0].length; q++) {
+                if(ips[i].time_freq[0][q] > 0 && ips[i].time_freq[1][q] > maxCount) {
+                    curInterval = ips[i].time_freq[0][q];
+                    maxCount = ips[i].time_freq[1][q];
+                };
+
+                if(ips[i].time_freq[0][q] > 0)
+                    ips[i].touples.push({myInterval: ips[i].time_freq[0][q], count: ips[i].time_freq[1][q]});
+
+			};
+
+            ips[i].touples.sort(function(a,b){return (a.count > b.count)? -1: ((b.count > a.count)? 1 : 0);});
+
+            var intervalIndex = getIndexByKey(topIntervals, "time", curInterval);
+            var intervalsL = topIntervals.length;
+
+            if(intervalIndex < 0){
+                topIntervals[intervalsL] = Object.create(interval);
+                topIntervals[intervalsL].time = curInterval;
+                topIntervals[intervalsL].conns = new Array();
+                topIntervals[intervalsL].conns.push(ips[i]);
+            }
+            else 
+               topIntervals[intervalIndex].conns.push(ips[i]); 
+		};
+
+        topIntervals.sort(function(a,b){return (a.time > b.time)? 1: ((b.time > a.time)? -1 : 0);});
+        //remove first element since it apears only once
+        topIntervals.splice(0,1);
+
+        for (var i = 0; i < topIntervals.length; i++) {
+            topIntervals[i].conns.sort(function(a,b){
+                return (a.touples[0].count > b.touples[0].count)? -1: ((b.touples[0].count > a.touples[0].count)? 1 : 0);});
+        };
+
+        var domain = topIntervals[4].conns[0].touples[0];
+
+        var plotCanvasYScale = d3.scale.linear()
+                                .domain([0, 100])
+                                .range([graphSize - 40, 0]);
+
+        var rectScale = d3.scale.linear()
+                                .domain([0, 100])
+                                .range([0, graphSize - 40]);
+
+        borderCanvas = d3.select("#freqGraphs")
+                            .append("svg")
+                            .attr("width", 185)
+                            .attr("height", (graphSize * 5) + 100);
+
+         var val = (graphSize - 40 )/ 4;
+         
+        // canvas 0 stuff here below-------------------------\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+        canvas0 = d3.select("#t0")
+                            .append("svg")
+                            .attr("width", graphSize*topIntervals[0].conns.length)
+                            .attr("height", graphSize);
+
+        var plotYaxis0 = d3.svg.axis()
+                        .orient("left")
+                        .scale(plotCanvasYScale);
+
+        borderCanvas.append("g")
+            .attr("transform", "translate(185, 10)")
+            .call(plotYaxis0);
+
+        borderCanvas.append("text")
+                    .attr("fill", "black")
+                    .attr("x", 5)
+                    .attr("y", graphSize/2)
+                    .style("font-size","18px")
+                    .text("1 sec intervals %");
+
+        canvas0.append("line")
+            .attr("x1", 0).attr("y1", graphSize - 35)
+            .attr("x2", graphSize*topIntervals[0].conns.length).attr("y2", graphSize - 35)
+            .attr("stroke", "black")
+            .attr("stroke-width", 2);
+
+        for (var i = 1; i < 5; i++) {
+            canvas0.append("line")
+                .attr("x1", 0).attr("y1", graphSize - (val*i + 35))
+                .attr("x2", graphSize*topIntervals[0].conns.length).attr("y2", graphSize - (val*i + 35))
+                .attr("stroke", "lightgray")
+                .attr("stroke-width", 1);
+        };
+
+        for (var i = 0; i < topIntervals[0].conns.length; i++) {
+            var total = 0;
+            var length = topIntervals[0].conns[i].touples.length;
+            for (var q = 0; q < length; q++) {
+                total += topIntervals[0].conns[i].touples[q].count;
+            };
+
+            var barWidth =(graphSize/length) - (length);
+            if(barWidth<10)
+                barWidth = 10;
+            topIntervals[0].conns[i].touples.sort(
+                function(a,b){
+                    return (a.myInterval > b.myInterval)? 1: ((b.myInterval > a.myInterval)? -1 : 0);
+                });
+
+            for (var q = 0; q < topIntervals[0].conns[i].touples.length; q++) {
+                var val = topIntervals[0].conns[i].touples[q].count/total * 100;
+                canvas0.append("rect")
+                        .attr("width", barWidth)
+                        .attr("height", rectScale(val))
+                        .attr("y",(graphSize - 35) - rectScale(val))
+                        .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
+                        .attr("fill", "#33CCCC");
+                
+                canvas0.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
+                    .attr("y", graphSize - 35)
+                    .style("font-size","10px")
+                    .text(topIntervals[0].conns[i].touples[q].myInterval);
+            };
+
+            canvas0.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("y", graphSize - 20)
+                    .style("font-size","12px")
+                    .text(topIntervals[0].conns[i].addr);
+        };
+        
+        // canvas 1 stuff here below-------------------------\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+        canvas1 = d3.select("#t1")
+                            .append("svg")
+                            .attr("width", graphSize*topIntervals[1].conns.length)
+                            .attr("height", graphSize);
+
+        var plotYaxis1 = d3.svg.axis()
+                        .orient("left")
+                        .scale(plotCanvasYScale);
+
+        borderCanvas.append("g")
+            .attr("transform", "translate(185, 275)")
+            .call(plotYaxis1);
+
+        borderCanvas.append("text")
+                    .attr("fill", "black")
+                    .attr("x", 5)
+                    .attr("y", graphSize/2 + 275)
+                    .style("font-size","18px")
+                    .text("2 sec intervals %");
+
+        canvas1.append("line")
+            .attr("x1", 0).attr("y1", graphSize - 35)
+            .attr("x2", graphSize*topIntervals[1].conns.length).attr("y2", graphSize - 35)
+            .attr("stroke", "black")
+            .attr("stroke-width", 2);
+
+        for (var i = 1; i < 5; i++) {
+            canvas1.append("line")
+                .attr("x1", 0).attr("y1", graphSize - (val*i + 35))
+                .attr("x2", graphSize*topIntervals[1].conns.length).attr("y2", graphSize - (val*i + 35))
+                .attr("stroke", "lightgray")
+                .attr("stroke-width", 1);
+        };
+
+        for (var i = 0; i < topIntervals[1].conns.length; i++) {
+            var total = 0;
+            var length = topIntervals[1].conns[i].touples.length;
+            for (var q = 0; q < length; q++) {
+                total += topIntervals[1].conns[i].touples[q].count;
+            };
+
+            var barWidth =(graphSize/length) - (length);
+            if(barWidth<10)
+                barWidth = 10;
+            topIntervals[1].conns[i].touples.sort(
+                function(a,b){
+                    return (a.myInterval > b.myInterval)? 1: ((b.myInterval > a.myInterval)? -1 : 0);
+                });
+
+            for (var q = 0; q < topIntervals[1].conns[i].touples.length; q++) {
+                var val = topIntervals[1].conns[i].touples[q].count/total * 100;
+                canvas1.append("rect")
+                        .attr("width", barWidth)
+                        .attr("height", rectScale(val))
+                        .attr("y",(graphSize - 35) - rectScale(val))
+                        .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
+                        .attr("fill", "#33CCCC");
+                
+                canvas1.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
+                    .attr("y", graphSize - 35)
+                    .style("font-size","10px")
+                    .text(topIntervals[1].conns[i].touples[q].myInterval);
+            };
+
+            canvas1.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("y", graphSize - 20)
+                    .style("font-size","12px")
+                    .text(topIntervals[1].conns[i].addr);
+        };
+
+        // canvas 2 stuff here below-------------------------\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/                    
+        canvas2 = d3.select("#t2")
+                            .append("svg")
+                            .attr("width", graphSize*topIntervals[2].conns.length)
+                            .attr("height", graphSize);
+
+        var plotYaxis2 = d3.svg.axis()
+                        .orient("left")
+                        .scale(plotCanvasYScale);
+
+        borderCanvas.append("g")
+            .attr("transform", "translate(185, 540)")
+            .call(plotYaxis2);
+
+        borderCanvas.append("text")
+                    .attr("fill", "black")
+                    .attr("x", 5)
+                    .attr("y", graphSize/2 + 540)
+                    .style("font-size","18px")
+                    .text("3 sec intervals %");
+
+        canvas2.append("line")
+            .attr("x1", 0).attr("y1", graphSize - 35)
+            .attr("x2", graphSize*topIntervals[2].conns.length).attr("y2", graphSize - 35)
+            .attr("stroke", "black")
+            .attr("stroke-width", 2);
+
+        for (var i = 1; i < 5; i++) {
+            canvas2.append("line")
+                .attr("x1", 0).attr("y1", graphSize - (val*i + 35))
+                .attr("x2", graphSize*topIntervals[2].conns.length).attr("y2", graphSize - (val*i + 35))
+                .attr("stroke", "lightgray")
+                .attr("stroke-width", 1);
+        };
+
+        for (var i = 0; i < topIntervals[2].conns.length; i++) {
+            var total = 0;
+            var length = topIntervals[2].conns[i].touples.length;
+            for (var q = 0; q < length; q++) {
+                total += topIntervals[2].conns[i].touples[q].count;
+            };
+
+            var barWidth =(graphSize/length) - (length);
+            if(barWidth < 10)
+                barWidth = 10;
+            
+            topIntervals[2].conns[i].touples.sort(
+                function(a,b){
+                    return (a.myInterval > b.myInterval)? 1: ((b.myInterval > a.myInterval)? -1 : 0);
+                });
+
+            for (var q = 0; q < topIntervals[2].conns[i].touples.length; q++) {
+                var val = topIntervals[2].conns[i].touples[q].count/total * 100;
+                canvas2.append("rect")
+                        .attr("width", barWidth)
+                        .attr("height", rectScale(val))
+                        .attr("y",(graphSize - 35) - rectScale(val))
+                        .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
+                        .attr("fill", "#33CCCC");
+                
+                canvas2.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
+                    .attr("y", graphSize - 35)
+                    .style("font-size","10px")
+                    .text(topIntervals[2].conns[i].touples[q].myInterval);
+            };
+
+            canvas2.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("y", graphSize - 20)
+                    .style("font-size","12px")
+                    .text(topIntervals[2].conns[i].addr);
+        };  
+
+
+        // canvas 3 stuff here below-------------------------\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+        canvas3 = d3.select("#t3")
+                            .append("svg")
+                            .attr("width", graphSize*topIntervals[3].conns.length)
+                            .attr("height", graphSize);
+        
+        var plotYaxis3 = d3.svg.axis()
+                        .orient("left")
+                        .scale(plotCanvasYScale);
+
+        borderCanvas.append("g")
+            .attr("transform", "translate(185, 795)")
+            .call(plotYaxis3);
+
+        borderCanvas.append("text")
+                    .attr("fill", "black")
+                    .attr("x", 5)
+                    .attr("y", graphSize/2 + 795)
+                    .style("font-size","18px")
+                    .text("5 sec intervals %");
+
+        canvas3.append("line")
+            .attr("x1", 0).attr("y1", graphSize - 35)
+            .attr("x2", graphSize*topIntervals[3].conns.length).attr("y2", graphSize - 35)
+            .attr("stroke", "black")
+            .attr("stroke-width", 2);
+
+        for (var i = 1; i < 5; i++) {
+            canvas3.append("line")
+                .attr("x1", 0).attr("y1", graphSize - (val*i + 35))
+                .attr("x2", graphSize*topIntervals[3].conns.length).attr("y2", graphSize - (val*i + 35))
+                .attr("stroke", "lightgray")
+                .attr("stroke-width", 1);
+        };
+
+        for (var i = 0; i < topIntervals[3].conns.length; i++) {
+            var total = 0;
+            var length = topIntervals[3].conns[i].touples.length;
+            for (var q = 0; q < length; q++) {
+                total += topIntervals[3].conns[i].touples[q].count;
+            };
+
+            var barWidth =(graphSize/length) - (length);
+            
+            topIntervals[3].conns[i].touples.sort(
+                function(a,b){
+                    return (a.myInterval > b.myInterval)? 1: ((b.myInterval > a.myInterval)? -1 : 0);
+                });
+
+            for (var q = 0; q < topIntervals[3].conns[i].touples.length; q++) {
+                var val = topIntervals[3].conns[i].touples[q].count/total * 100;
+                canvas3.append("rect")
+                        .attr("width", barWidth)
+                        .attr("height", rectScale(val))
+                        .attr("y",(graphSize - 35) - rectScale(val))
+                        .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
+                        .attr("fill", "#33CCCC");
+                
+                canvas3.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
+                    .attr("y", graphSize - 35)
+                    .style("font-size","10px")
+                    .text(topIntervals[3].conns[i].touples[q].myInterval + " sec");
+            };
+
+            canvas3.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("y", graphSize - 20)
+                    .style("font-size","12px")
+                    .text(topIntervals[3].conns[i].addr);
+        };  
+
+
+        // canvas 4 stuff here below-------------------------\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+        canvas4 = d3.select("#t4")
+                    .append("svg")
+                    .attr("width", graphSize*topIntervals[4].conns.length)
+                    .attr("height", graphSize);
+        
+        var plotYaxis4 = d3.svg.axis()
+                        .orient("left")
+                        .scale(plotCanvasYScale);
+
+        borderCanvas.append("g")
+            .attr("transform", "translate(185,1050)")
+            .call(plotYaxis4);
+
+        borderCanvas.append("text")
+                    .attr("fill", "black")
+                    .attr("x", 5)
+                    .attr("y", graphSize/2 + 1050)
+                    .style("font-size","18px")
+                    .text("300 sec intervals %");
+
+
+        canvas4.append("line")
+            .attr("x1", 0).attr("y1", graphSize - 35)
+            .attr("x2", graphSize*topIntervals[4].conns.length).attr("y2", graphSize - 35)
+            .attr("stroke", "black")
+            .attr("stroke-width", 2);
+
+        var val = (graphSize - 40 )/ 4 ;
+        for (var i = 1; i < 5; i++) {
+            canvas4.append("line")
+                .attr("x1", 0).attr("y1", graphSize - (val*i + 35))
+                .attr("x2", graphSize*topIntervals[4].conns.length).attr("y2", graphSize - (val*i + 35))
+                .attr("stroke", "lightgray")
+                .attr("stroke-width", 1);
+        };
+
+        for (var i = 0; i < topIntervals[4].conns.length; i++) {
+            var total = 0;
+            var length = topIntervals[4].conns[i].touples.length;
+            for (var q = 0; q < length; q++) {
+                total += topIntervals[4].conns[i].touples[q].count;
+            };
+
+            var barWidth =(graphSize/length) - (length);
+            
+            topIntervals[4].conns[i].touples.sort(
+                function(a,b){
+                    return (a.myInterval > b.myInterval)? 1: ((b.myInterval > a.myInterval)? -1 : 0);
+                });
+
+            for (var q = 0; q < topIntervals[4].conns[i].touples.length; q++) {
+                var val = topIntervals[4].conns[i].touples[q].count/total * 100;
+                canvas4.append("rect")
+                        .attr("width", barWidth)
+                        .attr("height", rectScale(val))
+                        .attr("y",(graphSize - 35) - rectScale(val))
+                        .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
+                        .attr("fill", "#33CCCC");
+                
+                canvas4.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
+                    .attr("y", graphSize - 35)
+                    .style("font-size","12px")
+                    .text(topIntervals[4].conns[i].touples[q].myInterval + " sec");
+            };
+
+            canvas4.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("y", graphSize - 20)
+                    .style("font-size","12px")
+                    .text(topIntervals[4].conns[i].addr);
+        };                                      
+	});
+
+    // helper function
+    function getIndexByKey(arrayName, key, valToFind) {
+        for (var i = 0; i < arrayName.length; i++) {
+            if(arrayName[i][key] == valToFind)
+                return i;
+        };  
+        return -1;
+    }
+
+	</script>
+</body>
+
+</html>
