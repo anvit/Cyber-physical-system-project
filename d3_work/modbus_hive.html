@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Modbus Destination Freq</title>
+    <title>Modbus Hive Plot</title>
     <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
     <link rel="stylesheet" type="text/css" href="styleH.css">
     <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -24,27 +24,32 @@
         
 
         // prepare data
-        // the original 74 ips that were observed in the begging 
+        // the original 74 ips that were observed in the beginning 
         for (var i = 0; i < edges.length; i++) {
-            if (edges[i].Source == "172.16.2.34" && origDests.indexOf(edges[i].Target) < 0){
-                origDests.push(edges[i].Target);
+            var index = getIndexByKey(origDests, "addr", edges[i].Target);
+            if (edges[i].Source == "172.16.2.34" && index < 0){
+                origDests.push({addr: edges[i].Target, indegree: 0});
+            }
+
+            if(index >= 0){
+                origDests[index].indegree += 1;
             }
         };
         // other sources not in the original dest or the .34 ip
         for (var i = 0; i < edges.length; i++) {
-            if (origDests.indexOf(edges[i].Source) < 0 && edges[i].Source != "172.16.2.34" && externalSrcs.indexOf(edges[i].Source) < 0){
+            if (getIndexByKey(origDests, "addr", edges[i].Source) < 0 && edges[i].Source != "172.16.2.34" && externalSrcs.indexOf(edges[i].Source) < 0){
                 externalSrcs.push(edges[i].Source);
             }
         };
         // other dests
         for (var i = 0; i < edges.length; i++) {
-             if (origDests.indexOf(edges[i].Target) < 0 && edges[i].Target != "172.16.2.34" && externalSrcs.indexOf(edges[i].Target) < 0){
+             if (getIndexByKey(origDests, "addr", edges[i].Target) < 0 && edges[i].Target != "172.16.2.34" && externalSrcs.indexOf(edges[i].Target) < 0){
                 otherDests.push(edges[i].Target);
             }
         };
 
         // sorting does not really change anything
-        // origDests.sort();
+        origDests.sort(function(a,b){return (a.indegree > b.indegree)? 1: ((b.indegree > a.indegree)? -1 : 0);});
         // externalSrcs.sort();
 
         // add nodes
@@ -52,8 +57,8 @@
         nodes.push({x: 0, y: .5, addr: "172.16.2.34"});
         // orig .34 dests
         for (var i = 0; i < origDests.length; i++) {
-            nodes.push({x: 1, y: i/(origDests.length), addr: origDests[i]});
-            nodes.push({x: 2, y: i/(origDests.length), addr: origDests[i]});
+            nodes.push({x: 1, y: i/(origDests.length), addr: origDests[i].addr});
+            nodes.push({x: 2, y: i/(origDests.length), addr: origDests[i].addr});
         };
         // other srcs
         for (var i = 0; i < externalSrcs.length; i++) {
@@ -76,7 +81,7 @@
                             target: nodes[getIndexBy2Key(nodes, "addr", "x", edges[i].Target, 1)]});
             }
             // between the 74 orig dests
-            else if (origDests.indexOf(edges[i].Source) >= 0) {
+            else if (getIndexByKey(origDests, "addr", edges[i].Source) >= 0) {
                  links.push({source: nodes[getIndexBy2Key(nodes, "addr", "x", edges[i].Source, 1)], 
                             target: nodes[getIndexBy2Key(nodes, "addr", "x", edges[i].Target, 2)]});
             }

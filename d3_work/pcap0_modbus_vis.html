@@ -200,14 +200,16 @@
             canvas = d3.select("#graph2")
                             .append("svg")
                             .attr("width", width)
-                            .attr("height", height);
+                            .attr("height", height + 50);
             var lines = canvas.append("g");
+           
             var circle = canvas.append("circle")                //red circle that represents the control station
                             .attr("cx", 5)
                             .attr("cy", height/2)
                             .attr("r", 5)
                             .attr("fill", "red");
             var margin = height/modbusSortedIP.length;          //ip destinations represented by blue circles
+           
             for (var i = 0; i < modbusSortedIP.length; i++) {
                 canvas.append("circle")
                         .attr("cx", modbusSortedIPXLoc)
@@ -225,19 +227,124 @@
                             .style("font-size","10px")
                             .text(function (d,i) {return d.address;});
 
+            var widthScale = d3.scale
+                                .linear()
+                                .domain([0, 14000])
+                                .range([0, 350]);
+
+            var connXaxis = d3.svg.axis()
+                                .scale(widthScale);
+
+            canvas.append("g")
+                .attr("transform", "translate("+  (modbusSortedIPXLoc + 75) + "," + height+ ")")
+                .call(connXaxis);
+
+            canvas.append("text")
+                .attr("fill", "black")
+                .attr("x", modbusSortedIPXLoc + 75 + ((width - modbusSortedIPXLoc + 75)/5))
+                .attr("y", height + 50)
+                .style("font-size","24px")
+                .text("Total Connections");
+
+             canvas.append("circle")
+                .attr("cx", 10)
+                .attr("cy", 25)
+                .attr("r", 5)
+                .attr("fill", "red");
+
+             canvas.append("text")
+                .attr("fill", "black")
+                .attr("x", 20)
+                .attr("y", 28)
+                .style("font-size","12px")
+                .text("Central Server");
+
+            canvas.append("circle")
+                .attr("cx", 10)
+                .attr("cy", 45)
+                .attr("r", 5)
+                .attr("fill", "blue");
+
+             canvas.append("text")
+                .attr("fill", "black")
+                .attr("x", 20)
+                .attr("y", 48)
+                .style("font-size","12px")
+                .text("RTU");
+
+            canvas.append("circle")
+                .attr("cx", 10)
+                .attr("cy", 65)
+                .attr("r", 5)
+                .attr("fill", "green");
+
+             canvas.append("text")
+                .attr("fill", "black")
+                .attr("x", 20)
+                .attr("y", 68)
+                .style("font-size","12px")
+                .text("Connection");
+
             // modbus address plot
             plotCanvas = d3.select("#numAccessGraph")
                             .append("svg")
                             .attr("width", plotWidth)
                             .attr("height", plothHeight);
+           
             var plot = plotCanvas.append("g");
-            plot.attr("transform", "translate(30, -20)");
+           
+            plot.attr("transform", "translate(60, -50)");
+           
             plotCanvas.append("g")
-                .attr("transform", "translate(30,280)")
+                .attr("transform", "translate(60,250)")
                 .call(plotXaxis);
+
             plotCanvas.append("g")
-                .attr("transform", "translate(30, -20)")
+                .attr("transform", "translate(60, -50)")
                 .call(plotYaxis);
+
+            plotCanvas.append("text")
+                .attr("fill", "black")
+                .attr("x", (700/2) - 30)
+                .attr("y", plothHeight - 5)
+                .style("font-size","24px")
+                .text("Time Since Start (sec)");
+
+            plotCanvas.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .attr("fill", "black")
+                .attr("x", 0 - (plothHeight/2))
+                .attr("y", 0 - margin.left)
+                .style("font-size","24px")
+                .text("Distinct Connections");
+
+            plotCanvas.append("circle")
+                .attr("cx", plotWidth - 170)
+                .attr("cy", 30)
+                .attr("r", 5)
+                .attr("fill", "#41D3F7");
+
+             plotCanvas.append("text")
+                .attr("fill", "black")
+                .attr("x", plotWidth - 160)
+                .attr("y", 33)
+                .style("font-size","12px")
+                .text("<= 40");
+
+             plotCanvas.append("circle")
+                .attr("cx", plotWidth - 100)
+                .attr("cy", 30)
+                .attr("r", 5)
+                .attr("fill", "#DA2525");
+
+             plotCanvas.append("text")
+                .attr("fill", "black")
+                .attr("x", plotWidth - 90)
+                .attr("y", 33)
+                .style("font-size","12px")
+                .text(">= 60");
 
             // Time table graph stuff
             document.getElementById("timeTable").setAttribute("style", "width: 800px; height:1030px");
@@ -330,7 +437,6 @@
                 };
 
                 //create graph showing distribution of connections
-                var widthScale = d3.scale.linear().domain([0, 14000]).range([0, 350]);
                 lines.selectAll("rect")
                     .data(addressCount[val])
                     .enter()

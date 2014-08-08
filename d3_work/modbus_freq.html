@@ -103,11 +103,14 @@
             .call(plotYaxis0);
 
         borderCanvas.append("text")
-                    .attr("fill", "black")
-                    .attr("x", 5)
-                    .attr("y", graphSize/2)
-                    .style("font-size","18px")
-                    .text("1 sec intervals %");
+            .attr("transform", "rotate(-90)")
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .attr("fill", "black")
+            .attr("x", 0 - (graphSize/2) + 20)
+            .attr("y", 130)
+            .style("font-size","18px")
+            .text("Total %");
 
         canvas0.append("line")
             .attr("x1", 0).attr("y1", graphSize - 35)
@@ -139,11 +142,11 @@
                 });
 
             for (var q = 0; q < topIntervals[0].conns[i].touples.length; q++) {
-                var val = topIntervals[0].conns[i].touples[q].count/total * 100;
+                var rectHeight = topIntervals[0].conns[i].touples[q].count/total * 100;
                 canvas0.append("rect")
                         .attr("width", barWidth)
-                        .attr("height", rectScale(val))
-                        .attr("y",(graphSize - 35) - rectScale(val))
+                        .attr("height", rectScale(rectHeight))
+                        .attr("y",(graphSize - 35) - rectScale(rectHeight))
                         .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
                         .attr("fill", "#33CCCC");
                 
@@ -157,9 +160,17 @@
 
             canvas0.append("text")
                     .attr("fill", "black")
-                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("x", (i * graphSize) + (graphSize/2) - 70)
                     .attr("y", graphSize - 20)
                     .style("font-size","12px")
+                    .text("Time Between Connections(sec)");
+
+
+            canvas0.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("y", graphSize - 2)
+                    .style("font-size","10px")
                     .text(topIntervals[0].conns[i].addr);
         };
         
@@ -178,11 +189,14 @@
             .call(plotYaxis1);
 
         borderCanvas.append("text")
-                    .attr("fill", "black")
-                    .attr("x", 5)
-                    .attr("y", graphSize/2 + 275)
-                    .style("font-size","18px")
-                    .text("2 sec intervals %");
+            .attr("transform", "rotate(-90)")
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .attr("fill", "black")
+            .attr("x", 0 - (graphSize/2) - (275 - 25))
+            .attr("y", 130)
+            .style("font-size","18px")
+            .text("Total %");
 
         canvas1.append("line")
             .attr("x1", 0).attr("y1", graphSize - 35)
@@ -190,12 +204,12 @@
             .attr("stroke", "black")
             .attr("stroke-width", 2);
 
-        for (var i = 1; i < 5; i++) {
-            canvas1.append("line")
-                .attr("x1", 0).attr("y1", graphSize - (val*i + 35))
-                .attr("x2", graphSize*topIntervals[1].conns.length).attr("y2", graphSize - (val*i + 35))
-                .attr("stroke", "lightgray")
-                .attr("stroke-width", 1);
+       for (var i = 1; i < 5; i++) {
+        canvas1.append("line")
+            .attr("x1", 0).attr("y1", graphSize - (val*i + 35))
+            .attr("x2", graphSize*topIntervals[1].conns.length).attr("y2", graphSize - (val*i + 35))
+            .attr("stroke", "lightgray")
+            .attr("stroke-width", 1);
         };
 
         for (var i = 0; i < topIntervals[1].conns.length; i++) {
@@ -214,11 +228,11 @@
                 });
 
             for (var q = 0; q < topIntervals[1].conns[i].touples.length; q++) {
-                var val = topIntervals[1].conns[i].touples[q].count/total * 100;
+                var rectHeight = topIntervals[1].conns[i].touples[q].count/total * 100;
                 canvas1.append("rect")
                         .attr("width", barWidth)
-                        .attr("height", rectScale(val))
-                        .attr("y",(graphSize - 35) - rectScale(val))
+                        .attr("height", rectScale(rectHeight))
+                        .attr("y",(graphSize - 35) - rectScale(rectHeight))
                         .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
                         .attr("fill", "#33CCCC");
                 
@@ -232,9 +246,17 @@
 
             canvas1.append("text")
                     .attr("fill", "black")
-                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("x", (i * graphSize) + (graphSize/2) - 70)
                     .attr("y", graphSize - 20)
                     .style("font-size","12px")
+                    .text("Time Between Connections(sec)");
+
+
+            canvas1.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("y", graphSize - 2)
+                    .style("font-size","10px")
                     .text(topIntervals[1].conns[i].addr);
         };
 
@@ -253,11 +275,14 @@
             .call(plotYaxis2);
 
         borderCanvas.append("text")
-                    .attr("fill", "black")
-                    .attr("x", 5)
-                    .attr("y", graphSize/2 + 540)
-                    .style("font-size","18px")
-                    .text("3 sec intervals %");
+            .attr("transform", "rotate(-90)")
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .attr("fill", "black")
+            .attr("x", 0 - (graphSize/2) - (540 - 25))
+            .attr("y", 130)
+            .style("font-size","18px")
+            .text("Total %");
 
         canvas2.append("line")
             .attr("x1", 0).attr("y1", graphSize - 35)
@@ -290,11 +315,11 @@
                 });
 
             for (var q = 0; q < topIntervals[2].conns[i].touples.length; q++) {
-                var val = topIntervals[2].conns[i].touples[q].count/total * 100;
+                var rectHeight = topIntervals[2].conns[i].touples[q].count/total * 100;
                 canvas2.append("rect")
                         .attr("width", barWidth)
-                        .attr("height", rectScale(val))
-                        .attr("y",(graphSize - 35) - rectScale(val))
+                        .attr("height", rectScale(rectHeight))
+                        .attr("y",(graphSize - 35) - rectScale(rectHeight))
                         .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
                         .attr("fill", "#33CCCC");
                 
@@ -308,9 +333,17 @@
 
             canvas2.append("text")
                     .attr("fill", "black")
-                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("x", (i * graphSize) + (graphSize/2) - 70)
                     .attr("y", graphSize - 20)
                     .style("font-size","12px")
+                    .text("Time Between Connections(sec)");
+
+
+            canvas2.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("y", graphSize - 2)
+                    .style("font-size","10px")
                     .text(topIntervals[2].conns[i].addr);
         };  
 
@@ -330,11 +363,14 @@
             .call(plotYaxis3);
 
         borderCanvas.append("text")
-                    .attr("fill", "black")
-                    .attr("x", 5)
-                    .attr("y", graphSize/2 + 795)
-                    .style("font-size","18px")
-                    .text("5 sec intervals %");
+            .attr("transform", "rotate(-90)")
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .attr("fill", "black")
+            .attr("x", 0 - (graphSize/2) - (795 - 25))
+            .attr("y", 130)
+            .style("font-size","18px")
+            .text("Total %");
 
         canvas3.append("line")
             .attr("x1", 0).attr("y1", graphSize - 35)
@@ -365,11 +401,11 @@
                 });
 
             for (var q = 0; q < topIntervals[3].conns[i].touples.length; q++) {
-                var val = topIntervals[3].conns[i].touples[q].count/total * 100;
+                var rectHeight = topIntervals[3].conns[i].touples[q].count/total * 100;
                 canvas3.append("rect")
                         .attr("width", barWidth)
-                        .attr("height", rectScale(val))
-                        .attr("y",(graphSize - 35) - rectScale(val))
+                        .attr("height", rectScale(rectHeight))
+                        .attr("y",(graphSize - 35) - rectScale(rectHeight))
                         .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
                         .attr("fill", "#33CCCC");
                 
@@ -378,14 +414,22 @@
                     .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
                     .attr("y", graphSize - 35)
                     .style("font-size","10px")
-                    .text(topIntervals[3].conns[i].touples[q].myInterval + " sec");
+                    .text(topIntervals[3].conns[i].touples[q].myInterval);
             };
 
             canvas3.append("text")
                     .attr("fill", "black")
-                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("x", (i * graphSize) + (graphSize/2) - 70)
                     .attr("y", graphSize - 20)
                     .style("font-size","12px")
+                    .text("Time Between Connections(sec)");
+
+
+            canvas3.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("y", graphSize - 2)
+                    .style("font-size","10px")
                     .text(topIntervals[3].conns[i].addr);
         };  
 
@@ -405,11 +449,14 @@
             .call(plotYaxis4);
 
         borderCanvas.append("text")
-                    .attr("fill", "black")
-                    .attr("x", 5)
-                    .attr("y", graphSize/2 + 1050)
-                    .style("font-size","18px")
-                    .text("300 sec intervals %");
+            .attr("transform", "rotate(-90)")
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .attr("fill", "black")
+            .attr("x", 0 - (graphSize/2) - (1050 - 25))
+            .attr("y", 130)
+            .style("font-size","18px")
+            .text("Total %");
 
 
         canvas4.append("line")
@@ -418,7 +465,6 @@
             .attr("stroke", "black")
             .attr("stroke-width", 2);
 
-        var val = (graphSize - 40 )/ 4 ;
         for (var i = 1; i < 5; i++) {
             canvas4.append("line")
                 .attr("x1", 0).attr("y1", graphSize - (val*i + 35))
@@ -442,11 +488,11 @@
                 });
 
             for (var q = 0; q < topIntervals[4].conns[i].touples.length; q++) {
-                var val = topIntervals[4].conns[i].touples[q].count/total * 100;
+                var rectHeight = topIntervals[4].conns[i].touples[q].count/total * 100;
                 canvas4.append("rect")
                         .attr("width", barWidth)
-                        .attr("height", rectScale(val))
-                        .attr("y",(graphSize - 35) - rectScale(val))
+                        .attr("height", rectScale(rectHeight))
+                        .attr("y",(graphSize - 35) - rectScale(rectHeight))
                         .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
                         .attr("fill", "#33CCCC");
                 
@@ -455,14 +501,22 @@
                     .attr("x", (q*barWidth) + (graphSize*i) + (q*2))
                     .attr("y", graphSize - 35)
                     .style("font-size","12px")
-                    .text(topIntervals[4].conns[i].touples[q].myInterval + " sec");
+                    .text(topIntervals[4].conns[i].touples[q].myInterval);
             };
 
             canvas4.append("text")
                     .attr("fill", "black")
-                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("x", (i * graphSize) + (graphSize/2) - 70)
                     .attr("y", graphSize - 20)
                     .style("font-size","12px")
+                    .text("Time Between Connections(sec)");
+
+
+            canvas4.append("text")
+                    .attr("fill", "black")
+                    .attr("x", (i * graphSize) + (graphSize/2) - 30)
+                    .attr("y", graphSize - 2)
+                    .style("font-size","10px")
                     .text(topIntervals[4].conns[i].addr);
         };                                      
 	});
