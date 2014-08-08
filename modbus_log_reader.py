@@ -43,8 +43,8 @@ for j in range(0,166):
 				else:
 					diff_host.append(row[2]+"*"+row[4])
 
-count_src_freq = Counter(select_src_ip)
-count_dst_freq = Counter(select_dst_ip)
+count_src_freq = Counter(src_ip)
+count_dst_freq = Counter(dst_ip)
 
 print count_dst_freq
 dst_freq_file = open('../modbus_dst_freq.txt', 'w')
