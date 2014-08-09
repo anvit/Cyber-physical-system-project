@@ -96,12 +96,12 @@
             };
         };
 
-        var width = 960,
-            height = 600,
+        var width = 800,
+            height = 1000,
             innerRadius = 40,
             outerRadius = 400;
 
-        var angle = d3.scale.ordinal().domain(d3.range(5)).rangePoints([-Math.PI/2, Math.PI/2]),
+        var angle = d3.scale.ordinal().domain(d3.range(5)).rangePoints([-3*Math.PI/4, 3*Math.PI/4]),
             radius = d3.scale.linear().range([innerRadius, outerRadius]),
             color = d3.scale.category10().domain(d3.range(30));
 
@@ -109,9 +109,62 @@
             .attr("width", width)
             .attr("height", height)
         .append("g")
-            .attr("transform", "translate(" + outerRadius + "," + (height - 100)+ ")");
-        // .attr("transform", "rotate(0deg)");
+            .attr("transform", "translate(" + outerRadius + "," + (height/2)+ ")");
+        
+        // labels
+        svg.append("circle")
+            .attr("cx", (-height/2) + 110)
+            .attr("cy", (-height/2) + 100)
+            .attr("r", 5)
+            .attr("fill", color(0));
 
+        svg.append("text")
+            .attr("fill", "black")
+            .attr("x", (-height/2) + 120)
+            .attr("y",  (-height/2) + 105)
+            .style("font-size","12px")
+            .text("Central Server");
+
+        svg.append("circle")
+            .attr("cx", (-height/2) + 110)
+            .attr("cy", (-height/2) + 120)
+            .attr("r", 5)
+            .attr("fill", color(1));
+
+        svg.append("text")
+            .attr("fill", "black")
+            .attr("x", (-height/2) + 120)
+            .attr("y",  (-height/2) + 125)
+            .style("font-size","12px")
+            .text("RTUs connected to central server");
+
+        svg.append("circle")
+            .attr("cx", (-height/2) + 110)
+            .attr("cy", (-height/2) + 140)
+            .attr("r", 5)
+            .attr("fill", color(3));
+
+        svg.append("text")
+            .attr("fill", "black")
+            .attr("x", (-height/2) + 120)
+            .attr("y",  (-height/2) + 145)
+            .style("font-size","12px")
+            .text("Sources that the central server doesn't connect to");
+
+        svg.append("circle")
+            .attr("cx", (-height/2) + 110)
+            .attr("cy", (-height/2) + 160)
+            .attr("r", 5)
+            .attr("fill", color(4));
+
+        svg.append("text")
+            .attr("fill", "black")
+            .attr("x", (-height/2) + 120)
+            .attr("y",  (-height/2) + 165)
+            .style("font-size","12px")
+            .text("Dest that the central server doesn't connect to");
+
+        // hive plot shapes
         svg.selectAll(".axis")
             .data(d3.range(5))
         .enter().append("line")
@@ -143,7 +196,7 @@
 
                 return 5;
             })
-            .style("fill", function(d) { return color(d.x); });
+            .style("fill", function(d) { return (d.x == 2? color(1): color(d.x));});
 
         function degrees(radians) {
         return radians / Math.PI * 180 - 90;
